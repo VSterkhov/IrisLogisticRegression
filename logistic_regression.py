@@ -7,17 +7,19 @@ Created on Fri Jul 15 09:02:31 2022
 import numpy as np
 
 class LogisticRegression:
-    def __init__(self):
-        self.w = 0
+    def __init__(self, X):
+        self.X_size = X.shape[0]
+        self.X_col_size = X.shape[1]
+        self.X = self.normalize(X)
+        self.w = np.zeros((self.X_col_size, 1))
         self.b = 0
-    
+        
     def sigmoid(self, z):
         return 1/(1 + np.exp(-z))
     
     def gradients(self, y,y_hat,x):
-        m = x.shape[0]
-        dw = (1/m)*np.dot(x.T, (y_hat - y))
-        db = (1/m)*np.sum((y_hat - y)) 
+        dw = (1/self.X_size)*np.dot(x.T, (y_hat - y))
+        db = (1/self.X_size)*np.sum((y_hat - y)) 
         return dw, db
     
     def loss(self, y, y_hat):
@@ -30,25 +32,34 @@ class LogisticRegression:
             X = (X - X.mean(axis=0))/X.std(axis=0)
         return X
     
-    def train(self, X, y, bs, epochs, lr):
-        m, n = X.shape
-        self.w = np.zeros((n,1))
+    def train(self, X, y, bs, epochs, lr, RMSprop):
+        self.w = np.zeros((self.X_col_size,1))
         self.b = 0
         y = y.reshape(bs,1)
         x = self.normalize(X)
         
         losses = []
         
+        vdw = 0
+        vdb = 0
         for epoch in range(epochs):
-            for i in range((m-1)//bs + 1):
+            for i in range((self.X_size-1)//bs + 1):
                 start_i = i*bs
                 end_i = start_i + bs
                 xb = X[start_i:end_i]
                 yb = y[start_i:end_i]
                 y_hat = self.sigmoid(np.dot(xb, self.w) + self.b)
                 dw, db = self.gradients(yb, y_hat, xb)
-                self.w -= lr*dw
-                self.b -= lr*db
+            
+                if RMSprop:
+                    vdw = 0.9 * vdw + 0.1 * pow(dw,2)
+                    vdb = 0.9 * vdb + 0.1 * pow(db,2)
+                    self.w = self.w - lr * (dw / (np.sqrt(vdw) + pow(10,-4)))
+                    self.b = self.b - lr * (db / (np.sqrt(vdb) + pow(10,-4)))
+                else:
+                    self.w -= lr*dw
+                    self.b -= lr*db
+                
             l = self.loss(y, self.sigmoid(np.dot(X, self.w) + self.b))
             losses.append(l)
         

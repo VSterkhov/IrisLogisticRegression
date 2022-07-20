@@ -22,14 +22,31 @@ X_train, X_test, Y_train, Y_test = train_test_split(targetData, Y, test_size=0.2
 Y_train = Y_train.array
 Y_test = Y_test.array
 
-logReg = LogisticRegression()
+logReg = LogisticRegression(X_train)
 
-w, b, losses = logReg.train(X_train, Y_train, X_train.shape[0], 1000, 0.1)
+w, b, losses = logReg.train(X_train, Y_train, X_train.shape[0], 100, 0.01, RMSprop=False)
+
+plt.title('Gradient descent')
+plt.plot(losses)
+plt.ylabel('losses')
+plt.xlabel('epoches')
+plt.show()
+
+pred = logReg.predict(X_test)
+acc = logReg.accuracy(Y_test, pred)
+
+print('Accuracy Y_test with predictions: ', acc)
+
+w, b, losses = logReg.train(X_train, Y_train, X_train.shape[0], 100, 0.01, RMSprop=True)
+
+plt.title('RMSprop')
+plt.plot(losses)
+plt.ylabel('losses')
+plt.xlabel('epoches')
+plt.show()
 
 
 pred = logReg.predict(X_test)
 acc = logReg.accuracy(Y_test, pred)
 
-print('Accuracy: ', acc)
-
-
+print('Accuracy Y_test with predictions: ', acc)
